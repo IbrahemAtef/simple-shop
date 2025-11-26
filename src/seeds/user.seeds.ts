@@ -1,6 +1,7 @@
 import { User } from 'generated/prisma';
 import { faker } from '@faker-js/faker';
 import * as argon from 'argon2';
+
 export const generateUserSeed = () => {
   const seededUser: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'> =
     {
@@ -18,4 +19,12 @@ export const getMerchantUser = async () =>
     email: 'merchant@example.com',
     password: await argon.hash('1234567'),
     role: 'MERCHANT',
+  }) as const;
+
+export const getAdminUser = async () =>
+  ({
+    name: 'Admin',
+    email: 'admin@example.com',
+    password: await argon.hash('admin123'),
+    role: 'ADMIN',
   }) as const;
