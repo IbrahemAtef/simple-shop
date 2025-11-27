@@ -23,6 +23,7 @@ import {
   createOrderDTOValidationSchema,
   createReturnDTOValidationSchema,
   updateOrderStatusSchema,
+  updateReturnStatusSchema,
 } from './util/order.validation.schema';
 import { paginationSchema } from 'src/utils/api.util';
 import type {
@@ -32,7 +33,7 @@ import type {
 import { User } from 'src/decorators/user.decorator';
 import { UserResponseDTO } from '../auth/dto/auth.dto';
 import { IdempotencyInterceptor } from 'src/interceptors/idempotency.interceptor';
-import { OrderStatus, UserRole } from 'generated/prisma';
+import { OrderStatus, UserRole, ReturnStatus } from 'generated/prisma';
 
 @Controller('order')
 @Roles([UserRole.ADMIN, UserRole.CUSTOMER])
@@ -58,6 +59,17 @@ export class OrderController {
     body: { orderStatus: OrderStatus },
   ): Promise<OrderResponseDTO> {
     return this.orderService.updateOrderStatus(id, body.orderStatus);
+  }
+
+  // Admin: Update return status
+  @Post('return/:id/status')
+  @Roles([UserRole.ADMIN])
+  async updateReturnStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body(new ZodValidationPipe(updateReturnStatusSchema))
+    body: { returnStatus: ReturnStatus },
+  ) {
+    return this.orderService.updateReturnStatus(id, body.returnStatus);
   }
 
   @Get()

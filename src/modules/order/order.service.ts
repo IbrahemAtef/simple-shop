@@ -6,7 +6,7 @@ import type {
 } from './types/order.dto';
 import { DatabaseService } from '../database/database.service';
 import { MoneyUtil } from 'src/utils/money.util';
-import { OrderStatus, Prisma, Product } from 'generated/prisma';
+import { OrderStatus, Prisma, Product, ReturnStatus } from 'generated/prisma';
 import { Decimal } from 'generated/prisma/runtime/library';
 import { PaginatedResult, PaginationQueryType } from 'src/types/util.types';
 import { removeFields } from 'src/utils/object.util';
@@ -145,6 +145,24 @@ export class OrderService {
       include: orderFullInclude,
     });
     return updated;
+  }
+
+  // TODO: (must work with transactions).
+  // Admin: Update return status
+  async updateReturnStatus(orderReturnId: number, status: ReturnStatus) {
+    const orderReturn = await this.prismaService.orderReturn.findUnique({
+      where: { id: orderReturnId },
+    });
+    if (!orderReturn) {
+      throw new BadRequestException('OrderReturn not found');
+    }
+    if (orderReturn.status === status) {
+      return orderReturn;
+    }
+    return this.prismaService.orderReturn.update({
+      where: { id: orderReturnId },
+      data: { status },
+    });
   }
 
   // helper methods

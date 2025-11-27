@@ -1,9 +1,17 @@
 import z, { ZodType } from 'zod';
 import { CreateOrderDTO, CreateOrderReturnDTO } from '../types/order.dto';
-import { OrderStatus } from 'generated/prisma';
+import { OrderStatus, ReturnStatus } from 'generated/prisma';
 
 export const updateOrderStatusSchema = z.object({
   orderStatus: z.enum([OrderStatus.PENDING, OrderStatus.SUCCESS]),
+});
+
+export const updateReturnStatusSchema = z.object({
+  returnStatus: z.enum([
+    ReturnStatus.PENDING,
+    ReturnStatus.PICKED,
+    ReturnStatus.REFUND,
+  ]),
 });
 
 export const createOrderDTOValidationSchema = z.array(
