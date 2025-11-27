@@ -6,7 +6,7 @@ import type {
 } from './types/order.dto';
 import { DatabaseService } from '../database/database.service';
 import { MoneyUtil } from 'src/utils/money.util';
-import { Prisma, Product } from 'generated/prisma';
+import { OrderStatus, Prisma, Product } from 'generated/prisma';
 import { Decimal } from 'generated/prisma/runtime/library';
 import { PaginatedResult, PaginationQueryType } from 'src/types/util.types';
 import { removeFields } from 'src/utils/object.util';
@@ -117,6 +117,34 @@ export class OrderService {
 
   remove(id: number) {
     return `This action removes a #${id} order`;
+  }
+
+  // Admin: Update order status
+  async updateOrderStatus(orderId: number, status: OrderStatus) {
+    const orderFullInclude = {
+      orderProducts: { include: { product: true } },
+      transactions: true,
+      orderReturns: {
+        include: { returnedItems: { include: { product: true } } },
+      },
+    };
+    const order = await this.prismaService.order.findUnique({
+      where: { id: orderId },
+      include: orderFullInclude,
+    });
+    if (!order) {
+      throw new BadRequestException('Order not found');
+    }
+    if (order.orderStatus === status) {
+      // No update needed, return the current order
+      return order;
+    }
+    const updated = await this.prismaService.order.update({
+      where: { id: orderId },
+      data: { orderStatus: status },
+      include: orderFullInclude,
+    });
+    return updated;
   }
 
   // helper methods

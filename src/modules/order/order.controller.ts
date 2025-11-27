@@ -7,6 +7,7 @@ import {
   Req,
   Query,
   UseInterceptors,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Roles } from 'src/decorators/roles.decorator';
@@ -21,6 +22,7 @@ import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import {
   createOrderDTOValidationSchema,
   createReturnDTOValidationSchema,
+  updateOrderStatusSchema,
 } from './util/order.validation.schema';
 import { paginationSchema } from 'src/utils/api.util';
 import type {
@@ -30,9 +32,10 @@ import type {
 import { User } from 'src/decorators/user.decorator';
 import { UserResponseDTO } from '../auth/dto/auth.dto';
 import { IdempotencyInterceptor } from 'src/interceptors/idempotency.interceptor';
+import { OrderStatus, UserRole } from 'generated/prisma';
 
 @Controller('order')
-@Roles(['CUSTOMER'])
+@Roles([UserRole.ADMIN, UserRole.CUSTOMER])
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
@@ -41,16 +44,25 @@ export class OrderController {
   create(
     @Body(new ZodValidationPipe(createOrderDTOValidationSchema))
     createOrderDto: CreateOrderDTO,
-
     @User() user: UserResponseDTO['user'],
   ): Promise<CreateOrderResponseDTO> {
     return this.orderService.create(createOrderDto, BigInt(user.id));
   }
 
+  // Admin: Update order status
+  @Post(':id/status')
+  @Roles([UserRole.ADMIN])
+  async updateOrderStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body(new ZodValidationPipe(updateOrderStatusSchema))
+    body: { orderStatus: OrderStatus },
+  ): Promise<OrderResponseDTO> {
+    return this.orderService.updateOrderStatus(id, body.orderStatus);
+  }
+
   @Get()
   findAll(
     @Req() request: Express.Request,
-
     @Query(new ZodValidationPipe(paginationSchema))
     query: PaginationQueryType,
   ): Promise<PaginatedResult<OrderOverviewResponseDTO>> {
