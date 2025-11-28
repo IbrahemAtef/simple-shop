@@ -39,9 +39,9 @@ export class OrderService {
     );
 
     const orderTotalPrice = MoneyUtil.calculateTotalAmount(
-      orderProductsData.map((orderPrdouct) => ({
-        price: orderPrdouct.pricePerItem as Decimal,
-        quantity: orderPrdouct.totalQty,
+      orderProductsData.map((orderProduct) => ({
+        price: orderProduct.pricePerItem as Decimal,
+        quantity: orderProduct.totalQty,
       })),
     );
 
@@ -147,21 +147,49 @@ export class OrderService {
     return updated;
   }
 
-  // TODO: (must work with transactions).
   // Admin: Update return status
   async updateReturnStatus(orderReturnId: number, status: ReturnStatus) {
-    const orderReturn = await this.prismaService.orderReturn.findUnique({
-      where: { id: orderReturnId },
-    });
-    if (!orderReturn) {
-      throw new BadRequestException('OrderReturn not found');
-    }
-    if (orderReturn.status === status) {
-      return orderReturn;
-    }
-    return this.prismaService.orderReturn.update({
-      where: { id: orderReturnId },
-      data: { status },
+    return this.prismaService.$transaction(async (prismaTX) => {
+      const orderReturn = await prismaTX.orderReturn.findUnique({
+        where: { id: orderReturnId },
+        include: { returnedItems: true },
+      });
+
+      if (!orderReturn) {
+        throw new BadRequestException('OrderReturn not found');
+      }
+
+      if (orderReturn.status === status) {
+        return orderReturn;
+      }
+
+      // If the return is REFUND, update totalQty
+      if (
+        status === ReturnStatus.REFUND &&
+        orderReturn.status !== ReturnStatus.REFUND
+      ) {
+        for (const item of orderReturn.returnedItems) {
+          await prismaTX.orderProduct.update({
+            where: {
+              orderId_productId: {
+                orderId: orderReturnId,
+                productId: item.productId,
+              },
+            },
+            data: {
+              totalQty: {
+                increment: item.qty,
+              },
+            },
+          });
+        }
+      }
+
+      // Update the return status
+      return prismaTX.orderReturn.update({
+        where: { id: orderReturnId },
+        data: { status },
+      });
     });
   }
 
@@ -198,7 +226,7 @@ export class OrderService {
           id: createReturnDto.orderId,
         },
       });
-      // validate returns product ids already included in order && return qty is witin capacity total qty
+      // validate returns product ids already included in order && return qty is within capacity total qty
       const existingOrderProducts = await prismaTX.orderProduct.findMany({
         where: {
           orderId: createReturnDto.orderId,
