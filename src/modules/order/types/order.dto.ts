@@ -21,9 +21,17 @@ export type OrderResponseDTO = Prisma.OrderGetPayload<{
 
 export type OrderOverviewResponseDTO = Prisma.OrderGetPayload<{
   include: {
-    orderProducts: true;
-    transactions: true;
-    orderReturns: true;
+    orderProducts: {
+      select: {
+        totalQty: true;
+        product: { select: { id: true; name: true } };
+      };
+    };
+    orderReturns: { select: { id: true; status: true } };
+    transactions: {
+      where: { type: 'DEBIT' };
+      select: { amount: true };
+    };
   };
 }>;
 

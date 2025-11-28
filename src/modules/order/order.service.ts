@@ -79,14 +79,25 @@ export class OrderService {
       const orders = await prisma.order.findMany({
         ...removeFields(pagination, ['page']),
         where: { userId },
+        orderBy: {
+          createdAt: 'desc',
+        },
         include: {
-          orderProducts: true,
-          orderReturns: true,
-          transactions: true,
+          orderProducts: {
+            select: {
+              totalQty: true,
+              product: { select: { id: true, name: true } },
+            },
+          },
+          orderReturns: { select: { id: true, status: true } },
+          transactions: {
+            where: { type: 'DEBIT' },
+            select: { amount: true },
+          },
         },
       });
 
-      const count = await prisma.order.count();
+      const count = await prisma.order.count({ where: { userId } });
       return {
         data: orders,
         ...this.prismaService.formatPaginationResponse({

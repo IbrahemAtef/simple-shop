@@ -41,15 +41,26 @@ export class ProductService {
         ? { name: { contains: query.name } }
         : {};
       const pagination = this.prismaService.handleQueryPagination(query);
-      const proucts = await prisma.product.findMany({
+      const products = await prisma.product.findMany({
         ...removeFields(pagination, ['page']),
         where: whereClause,
+        orderBy: {
+          id: 'desc',
+        },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          Asset: {
+            select: { url: true },
+          },
+        },
       });
       const count = await prisma.product.count({
         where: whereClause,
       });
       return {
-        data: proucts,
+        data: products,
         ...this.prismaService.formatPaginationResponse({
           page: pagination.page,
           count,

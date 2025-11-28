@@ -22,11 +22,15 @@ export class UserService {
       const pagination = this.prismaService.handleQueryPagination(query);
       const users = await prisma.user.findMany({
         ...removeFields(pagination, ['page']),
+        where: { isDeleted: false },
+        orderBy: {
+          createdAt: 'desc',
+        },
         omit: {
           password: true,
         },
       });
-      const count = await prisma.user.count();
+      const count = await prisma.user.count({ where: { isDeleted: false } });
       return {
         data: users,
         ...this.prismaService.formatPaginationResponse({
