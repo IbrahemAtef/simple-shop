@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { DatabaseService } from '../database/database.service';
 
 describe('UserController', () => {
   let controller: UserController;
@@ -8,7 +9,20 @@ describe('UserController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [UserService],
+      providers: [
+        UserService,
+        {
+          provide: DatabaseService,
+          useValue: {
+            user: {
+              findMany: jest.fn(),
+              findUnique: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+            },
+          },
+        },
+      ],
     }).compile();
 
     controller = module.get<UserController>(UserController);
@@ -18,3 +32,4 @@ describe('UserController', () => {
     expect(controller).toBeDefined();
   });
 });
+

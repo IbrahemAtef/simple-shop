@@ -15,9 +15,6 @@ import { removeFields } from 'src/utils/object.util';
 export class OrderService {
   constructor(private readonly prismaService: DatabaseService) {}
   async create(createOrderDto: CreateOrderDTO, userId: number | bigint) {
-    // MISSING order total
-    // missing product price
-
     const productIds = createOrderDto.map((item) => item.productId);
     // get products
     const products = await this.prismaService.product.findMany({

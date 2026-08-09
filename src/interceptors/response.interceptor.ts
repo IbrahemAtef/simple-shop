@@ -35,6 +35,5 @@ export class ResponseInterceptor<T extends Record<string, unknown>>
 export const isPaginationResponse = <T>(
   data: Record<string, unknown>,
 ): data is PaginatedResult<T> => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return data && typeof data === 'object' && 'data' in data && 'meta' in data;
 };

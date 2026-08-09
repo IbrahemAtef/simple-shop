@@ -9,6 +9,7 @@ import {
   ZodExceptionFilter,
 } from './exceptions/exception';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 BigInt.prototype.toJSON = function () {
   return this.toString();
@@ -31,7 +32,25 @@ async function bootstrap() {
     new PrismaExceptionFilter(),
   );
 
-  console.log(process.env.NODE_ENV, 'NODE_ENV');
+  // Swagger OpenAPI Setup
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Simple Shop API')
+    .setDescription(
+      'Robust E-commerce RESTful API built with NestJS 11, Prisma ORM, MySQL, JWT Auth, Idempotent Operations, and ImageKit Asset Management.',
+    )
+    .setVersion('1.0.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', in: 'header' },
+      'JWT-auth',
+    )
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'Simple Shop API Docs',
+  });
+
+  console.log(`Environment: ${process.env.NODE_ENV ?? 'development'}`);
   await app.listen(process.env.PORT ?? 3000);
 }
 

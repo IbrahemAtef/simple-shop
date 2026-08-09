@@ -1,98 +1,220 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="https://nestjs.com/img/logo-small.svg" width="100" alt="NestJS Logo" />
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<h1 align="center">Simple Shop API</h1>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  <b>A Scalable, Enterprise-Grade E-Commerce & Financial Ledger Backend</b>
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+<p align="center">
+  <img src="https://img.shields.io/badge/NestJS-11.x-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Prisma-6.x-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Swagger-OpenAPI_3.0-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger" />
+</p>
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## 📌 Overview
 
-```bash
-$ npm install
+**Simple Shop API** is a production-ready Node.js backend built with **NestJS 11**, **Prisma ORM**, and **MySQL**. It models an e-commerce ecosystem featuring multi-role authentication, product catalog management, payment transactions ledger, return requests, and cloud media management with built-in idempotency protection.
+
+---
+
+## ⚡ Key Architectural Features
+
+- 🔐 **Role-Based Access Control (RBAC)**: Custom metadata decorators (`@Roles`) guarding endpoints across `CUSTOMER`, `MERCHANT`, and `ADMIN` roles.
+- 🔁 **Idempotency Engine**: Header-driven (`idempotency-key`) interceptor backed by MySQL persistence to ensure safe, duplicate-free order placements and return requests.
+- 💳 **Financial Ledger & Returns**: Double-entry transaction model (`CREDIT` / `DEBIT`) tracking order purchases, returns, and inventory quantity synchronization.
+- 🖼️ **Cloud Asset Management**: Integrated **ImageKit CDN** provider with an automated `FileCleanupInterceptor` that removes temporary disk files after cloud upload.
+- 🛡️ **Global Resiliency & Filtering**: Centralized exception pipeline with dedicated filters (`PrismaExceptionFilter`, `ZodExceptionFilter`, `HttpExceptionFilter`, `ImageKitExceptionFilter`).
+- ⏱️ **Rate Limiting**: Configured with `@nestjs/throttler` to prevent abuse on sensitive authentication and transaction routes.
+- 📖 **Interactive Swagger Documentation**: Full OpenAPI specs hosted at `/api/docs` with request models, authorization schemas, and response types.
+
+---
+
+## 🗄️ Database Architecture (ERD)
+
+```mermaid
+erDiagram
+    users ||--o{ orders : places
+    users ||--o{ user_transactions : owns
+    users ||--o{ products : manages
+    users ||--o{ assets : uploads
+    
+    products ||--o{ order_product : contains
+    products ||--o{ returned_items : includes
+    products ||--o{ assets : has
+    
+    orders ||--o{ order_product : consists_of
+    orders ||--o{ user_transactions : generates
+    orders ||--o{ order_returns : requests
+    
+    order_returns ||--o{ returned_items : details
+    order_returns ||--o{ user_transactions : refunds
+
+    users {
+        BigInt id PK
+        String name
+        String email UK
+        String password
+        UserRole role "CUSTOMER | MERCHANT | ADMIN"
+        Boolean is_deleted
+        DateTime created_at
+    }
+
+    products {
+        BigInt id PK
+        String name
+        String description
+        Decimal price
+        BigInt merchant_id FK
+        Boolean is_deleted
+    }
+
+    orders {
+        BigInt id PK
+        BigInt user_id FK
+        OrderStatus order_status "PENDING | SUCCESS"
+        DateTime created_at
+        DateTime updated_at
+    }
+
+    order_product {
+        BigInt order_id PK, FK
+        BigInt product_id PK, FK
+        Decimal price_per_item
+        Int total_qty
+    }
+
+    user_transactions {
+        BigInt id PK
+        Decimal amount
+        BigInt user_id FK
+        TransactionType type "CREDIT | DEBIT"
+        BigInt order_id FK
+        BigInt order_return_id FK
+        PaymentMethod payment_method "CASH"
+        DateTime created_at
+    }
+
+    order_returns {
+        BigInt id PK
+        BigInt order_id FK
+        ReturnStatus status "PENDING | PICKED | REFUND"
+        DateTime created_at
+    }
+
+    returned_items {
+        BigInt order_return_id PK, FK
+        BigInt product_id PK, FK
+        Int qty
+    }
+
+    idempotencies {
+        String idempotency_key PK
+        Json response
+        IdempotencyStatus idempotency_status "IN_PROGRESS | COMPLETED | FAILED"
+        DateTime expires_at
+    }
 ```
 
-## Compile and run the project
+---
 
+## 🚀 Interactive API Documentation
+
+Interactive Swagger API documentation is served out-of-the-box:
+
+- **Swagger UI**: `http://localhost:3000/api/docs`
+
+> You can authenticate directly within Swagger UI using the `Authorize` button and passing your JWT Bearer token!
+
+---
+
+## 🛠️ API Reference Table
+
+| Category | Method | Endpoint | Access Role | Description |
+| :--- | :---: | :--- | :---: | :--- |
+| **Auth** | `POST` | `/api/auth/register` | Public | Register a new user account (`CUSTOMER`, `MERCHANT`, `ADMIN`) |
+| **Auth** | `POST` | `/api/auth/login` | Public | Authenticate user & issue JWT token |
+| **Auth** | `GET` | `/api/auth/validate` | Authenticated | Validate active JWT session token |
+| **Products** | `POST` | `/api/product` | `MERCHANT` | Create product with image asset upload (Idempotent) |
+| **Products** | `GET` | `/api/product` | `CUSTOMER`, `MERCHANT` | List products with pagination & search |
+| **Products** | `GET` | `/api/product/:id` | `CUSTOMER`, `MERCHANT` | Get product details by ID |
+| **Products** | `PATCH` | `/api/product/:id` | `MERCHANT` | Update product details or image asset |
+| **Products** | `DELETE` | `/api/product/:id` | `MERCHANT` | Soft-delete a product |
+| **Orders** | `POST` | `/api/order` | `CUSTOMER`, `ADMIN` | Place new purchase order (Idempotent) |
+| **Orders** | `GET` | `/api/order` | `CUSTOMER`, `ADMIN` | View authenticated user order history |
+| **Orders** | `GET` | `/api/order/:id` | `CUSTOMER`, `ADMIN` | Get order breakdown by ID |
+| **Orders** | `POST` | `/api/order/:id/status` | `ADMIN` | Update order status (`PENDING` -> `SUCCESS`) |
+| **Returns** | `POST` | `/api/order/return` | `CUSTOMER`, `ADMIN` | Request order item return/refund (Idempotent) |
+| **Returns** | `POST` | `/api/order/return/:id/status` | `ADMIN` | Update return status & trigger inventory refund |
+| **Ledger** | `GET` | `/api/transactions` | Authenticated | Query personal credit/debit transaction history |
+| **Users** | `GET` | `/api/user` | Authenticated | List registered users with pagination |
+| **Users** | `PATCH` | `/api/user/:id` | Authenticated | Update user profile information |
+
+---
+
+## 💻 Local Setup & Development Guide
+
+### Prerequisites
+- Node.js `20.x` or higher
+- MySQL `8.0` or Docker Desktop
+
+### 1. Clone & Install Dependencies
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone https://github.com/your-username/simple-shop.git
+cd simple-shop
+npm install
 ```
 
-## Run tests
-
+### 2. Configure Environment Variables
+Copy the template `.env.example` file to `.env`:
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cp .env.example .env
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### 3. Run via Docker Compose (Recommended)
+Launch the MySQL database and application containers instantly:
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+docker-compose up -d
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 4. Alternative: Run Locally with Prisma
+```bash
+# Push schema to MySQL database
+npx prisma db push
 
-## Resources
+# (Optional) Seed initial data
+npm run seed
 
-Check out a few resources that may come in handy when working with NestJS:
+# Start NestJS development server
+npm run dev
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+The application will start on **`http://localhost:3000`** with Swagger documentation available at **`http://localhost:3000/api/docs`**.
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🧪 Testing
 
-## Stay in touch
+```bash
+# Run unit tests
+npm run test
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Run end-to-end integration tests
+npm run test:e2e
 
-## License
+# Generate test coverage report
+npm run test:cov
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## 📜 License
+
+This project is open-source and available under the [MIT License](LICENSE).
